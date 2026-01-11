@@ -22,10 +22,11 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   return R * c;
 }
 
-const cleanText = (text: string) => {
+const cleanText = (text: string | undefined) => {
+  if (!text || typeof text !== 'string') return '';
   return text
-    .replace(/\*\*/g, '') 
-    .replace(/#/g, '')   
+    .replace(/\*\*/g, '')
+    .replace(/#/g, '')
     .replace(/^\s*[\*•-]\s+/gm, '• ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
@@ -145,7 +146,7 @@ const App: React.FC = () => {
     setSmartResult(null);
     const response = await askYBSAssistant(queryToUse);
     setSmartResult({
-      text: cleanText(response.text),
+      text: cleanText(String(response.text || '')),
       sources: response.sources
     });
     setIsSmartLoading(false);

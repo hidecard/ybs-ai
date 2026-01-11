@@ -35,8 +35,43 @@ export async function askYBSAssistant(query: string) {
       stream: false
     });
 
+    // Ensure response is a string
+    console.log('Puter response:', response);
+    let responseText = '';
+    if (typeof response === 'string') {
+      responseText = response;
+    } else if (Array.isArray(response)) {
+      responseText = response[0]?.text || response[0]?.message?.content || response[0]?.content || String(response[0] || '');
+    } else if (response && typeof response === 'object') {
+      responseText = response.response || response.text || response.message?.content || response.content || response.data || response.choices?.[0]?.message?.content || response.choices?.[0]?.text || '';
+      if (!responseText) {
+        // Find first string value in object recursively
+        const findString = (obj: any): string => {
+          if (typeof obj === 'string') return obj;
+          if (Array.isArray(obj)) {
+            for (const item of obj) {
+              const found = findString(item);
+              if (found) return found;
+            }
+          } else if (obj && typeof obj === 'object') {
+            for (const key of Object.keys(obj)) {
+              const found = findString(obj[key]);
+              if (found) return found;
+            }
+          }
+          return '';
+        };
+        responseText = findString(response);
+      }
+      if (!responseText) {
+        responseText = JSON.stringify(response);
+      }
+    } else {
+      responseText = String(response);
+    }
+
     return {
-      text: response,
+      text: responseText,
       sources: [] // Puter.js doesn't provide grounding metadata like Google AI
     };
   } catch (error) {
