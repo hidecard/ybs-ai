@@ -1,0 +1,7 @@
+{
+  "name": "YBS Wayfinder - Yangon Bus Guide",
+  "description": "A comprehensive bus route finder and stop directory for Yangon Bus Service (YBS) featuring AI-powered route suggestions, bus stop catalogs, and detailed line information.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
