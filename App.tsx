@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Bus, MapPin, Search, Bot, Info, ChevronRight, Menu, X, ArrowRightLeft, Sparkles, Send, Map as MapIcon, Zap, ExternalLink, RefreshCcw, Globe, ShieldCheck, Flag, Navigation, Filter, Repeat, Clock, Locate, ChevronDown, ChevronUp, CircleDot, Building2, Star, Languages, History, ArrowLeft, Wallet, Timer, Calendar, User, MessageSquare, Clock3 } from 'lucide-react';
+import { Bus, MapPin, Search, Info, ChevronRight, Menu, X, ArrowRightLeft, Sparkles, Send, Map as MapIcon, Zap, ExternalLink, RefreshCcw, Globe, ShieldCheck, Flag, Navigation, Filter, Repeat, Clock, Locate, ChevronDown, ChevronUp, CircleDot, Building2, Star, Languages, History, ArrowLeft, Wallet, Timer, Calendar, User, MessageSquare, Clock3 } from 'lucide-react';
 import { ViewState, BusLine, BusStop, Language } from './types';
 import { BUS_LINES, BUS_STOPS } from './data/busData';
 import { askYBSAssistant } from './services/geminiService';
@@ -50,11 +50,9 @@ const App: React.FC = () => {
   const [locationError, setLocationError] = useState<string | null>(null);
 
   const [lineSearchQuery, setLineSearchQuery] = useState('');
-  const [aiMessage, setAiMessage] = useState('');
-  const [chatHistory, setChatHistory] = useState<{role: 'user' | 'bot', text: string, time: string, sources?: any[]}[]>([]);
-  const [isAiLoading, setIsAiLoading] = useState(false);
 
-  const chatEndRef = useRef<HTMLDivElement>(null);
+
+
 
   const nearbyStops = useMemo(() => {
     if (!userLocation) return [];
@@ -91,9 +89,7 @@ const App: React.FC = () => {
   useEffect(() => { localStorage.setItem('ybs-lang', lang); }, [lang]);
   useEffect(() => { localStorage.setItem('ybs-favs', JSON.stringify(favorites)); }, [favorites]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatHistory, isAiLoading]);
+
 
   const toggleFavorite = (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -152,26 +148,7 @@ const App: React.FC = () => {
     setIsSmartLoading(false);
   };
 
-  const handleAiAsk = async () => {
-    if (!aiMessage.trim()) return;
-    const userText = aiMessage;
-    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    setChatHistory(prev => [...prev, { role: 'user', text: userText, time: now }]);
-    setAiMessage('');
-    setIsAiLoading(true);
-    
-    const response = await askYBSAssistant(userText);
-    const botNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    setChatHistory(prev => [...prev, { 
-      role: 'bot', 
-      text: cleanText(response.text), 
-      time: botNow,
-      sources: response.sources 
-    }]);
-    setIsAiLoading(false);
-  };
+
 
   const NavItem = ({ view, icon: Icon, label }: { view: ViewState, icon: any, label: string }) => (
     <button
@@ -194,7 +171,7 @@ const App: React.FC = () => {
           <div className="bg-slate-900 p-2 rounded-xl">
             <Bus size={22} className="text-yellow-400" />
           </div>
-          <h1 className="text-xl font-black italic tracking-tighter">YBS<span className="text-yellow-500">.</span>Wayfinder</h1>
+          <h1 className="text-xl font-black italic tracking-tighter">YBS<span className="text-yellow-500">.</span>Ai</h1>
         </div>
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-100 rounded-xl">
           {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
@@ -221,7 +198,6 @@ const App: React.FC = () => {
           <NavItem view="home" icon={Zap} label={t.home} />
           <NavItem view="bus-list" icon={MapIcon} label={t.routes} />
           <NavItem view="nearby" icon={MapPin} label={t.nearby} />
-          <NavItem view="ai-assistant" icon={Bot} label={t.ai} />
         </nav>
 
         <div className="absolute bottom-8 left-0 w-full px-6 space-y-4">
@@ -366,7 +342,7 @@ const App: React.FC = () => {
 
                   <div className="bg-yellow-50 p-10 rounded-[3.5rem] border border-yellow-100/50 space-y-4">
                     <div className="flex items-center space-x-2 text-sm font-black text-yellow-700 uppercase tracking-widest">
-                      <Bot size={18} />
+                      <Sparkles size={18} />
                       <span>AI Insights</span>
                     </div>
                     <p className="text-sm font-bold text-yellow-800 leading-relaxed italic">
@@ -443,42 +419,36 @@ const App: React.FC = () => {
               </section>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-              <div className="lg:col-span-2 space-y-8">
-                {favorites.length > 0 && (
-                  <div className="space-y-4">
-                    <h3 className="font-black text-slate-400 uppercase text-[11px] tracking-[0.4em] flex items-center space-x-2">
-                      <Star size={12} className="text-yellow-400 fill-yellow-400" />
-                      <span>{t.favTitle}</span>
-                    </h3>
-                    <div className="flex flex-wrap gap-4">
-                      {BUS_LINES.filter(l => favorites.includes(l.id)).map(line => (
-                        <button key={line.id} onClick={() => { setSelectedBusId(line.id); setActiveView('bus-detail'); }} className="bg-white p-4 px-6 rounded-2xl border border-slate-100 shadow-sm hover:border-yellow-400 transition-all flex items-center space-x-3">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-black" style={{ backgroundColor: line.color }}>{line.number.replace('YBS ', '')}</div>
-                          <span className="font-black text-sm">{line.number}</span>
-                        </button>
-                      ))}
-                    </div>
+            <div className="space-y-8">
+              {favorites.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-black text-slate-400 uppercase text-[11px] tracking-[0.4em] flex items-center space-x-2">
+                    <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                    <span>{t.favTitle}</span>
+                  </h3>
+                  <div className="flex flex-wrap gap-4">
+                    {BUS_LINES.filter(l => favorites.includes(l.id)).map(line => (
+                      <button key={line.id} onClick={() => { setSelectedBusId(line.id); setActiveView('bus-detail'); }} className="bg-white p-4 px-6 rounded-2xl border border-slate-100 shadow-sm hover:border-yellow-400 transition-all flex items-center space-x-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-black" style={{ backgroundColor: line.color }}>{line.number.replace('YBS ', '')}</div>
+                        <span className="font-black text-sm">{line.number}</span>
+                      </button>
+                    ))}
                   </div>
-                )}
-                <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10">
-                  <h3 className="font-black text-3xl text-slate-900 tracking-tight">{t.ai}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
-                    <input type="text" value={fromStop} onChange={(e) => setFromStop(e.target.value)} placeholder={lang === 'mm' ? 'လက်ရှိနေရာ...' : 'Current location...'} className="w-full p-6 bg-slate-50 border border-slate-100 rounded-[1.75rem] outline-none font-bold text-slate-700" />
-                    <input type="text" value={toStop} onChange={(e) => setToStop(e.target.value)} placeholder={lang === 'mm' ? 'သွားမည့်နေရာ...' : 'Destination...'} className="w-full p-6 bg-slate-50 border border-slate-100 rounded-[1.75rem] outline-none font-bold text-slate-700" />
-                  </div>
-                  <button onClick={async () => { 
-                    const prompt = `${fromStop} မှ ${toStop} သို့ အကောင်းဆုံးလမ်းကြောင်းကို ရှင်းပြပါ။`; 
-                    setSmartQuery(prompt); 
-                    await handleSmartSearch(undefined, prompt); 
-                  }} className="w-full bg-yellow-400 text-slate-900 font-black py-6 rounded-[2rem] shadow-2xl flex items-center justify-center space-x-4">
-                    <Bot size={24} /><span>{t.aiRouteBtn}</span>
-                  </button>
                 </div>
-              </div>
-              <div className="space-y-8">
-                <h3 className="font-black text-slate-400 uppercase text-[11px] tracking-[0.4em] flex items-center space-x-2"><History size={12} /><span>{t.recentNews}</span></h3>
-                <div className="space-y-5">{news.map(item => (<div key={item.id} className="bg-white p-7 rounded-[2.25rem] border border-slate-100 shadow-sm group hover:border-yellow-400 transition-all"><span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[9px] font-black uppercase tracking-widest">{item.time}</span><h4 className="font-bold text-slate-800 leading-tight mt-3">{item.title}</h4></div>))}</div>
+              )}
+              <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3.5rem] border border-slate-100 shadow-sm space-y-8 sm:space-y-10">
+                <h3 className="font-black text-2xl sm:text-3xl text-slate-900 tracking-tight">{t.ai}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 relative">
+                  <input type="text" value={fromStop} onChange={(e) => setFromStop(e.target.value)} placeholder={lang === 'mm' ? 'လက်ရှိနေရာ...' : 'Current location...'} className="w-full p-4 sm:p-6 bg-slate-50 border border-slate-100 rounded-[1.5rem] sm:rounded-[1.75rem] outline-none font-bold text-slate-700 text-sm sm:text-base" />
+                  <input type="text" value={toStop} onChange={(e) => setToStop(e.target.value)} placeholder={lang === 'mm' ? 'သွားမည့်နေရာ...' : 'Destination...'} className="w-full p-4 sm:p-6 bg-slate-50 border border-slate-100 rounded-[1.5rem] sm:rounded-[1.75rem] outline-none font-bold text-slate-700 text-sm sm:text-base" />
+                </div>
+                <button onClick={async () => {
+                  const prompt = `${fromStop} မှ ${toStop} သို့ အကောင်းဆုံးလမ်းကြောင်းကို ရှင်းပြပါ။`;
+                  setSmartQuery(prompt);
+                  await handleSmartSearch(undefined, prompt);
+                }} className="w-full bg-yellow-400 text-slate-900 font-black py-4 sm:py-6 rounded-[1.5rem] sm:rounded-[2rem] shadow-2xl flex items-center justify-center space-x-3 sm:space-x-4 text-sm sm:text-base">
+                  <Sparkles size={20} className="sm:w-6 sm:h-6" /><span>{t.aiRouteBtn}</span>
+                </button>
               </div>
             </div>
           </div>
@@ -571,132 +541,14 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {activeView === 'ai-assistant' && (
-           <div className="max-w-4xl mx-auto flex flex-col min-h-[calc(100vh-12rem)] sm:min-h-[calc(100vh-16rem)]">
-              <header className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight">{t.ai}</h2>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Yangon Smart Engine</p>
-                </div>
-                <div className="flex items-center space-x-2 text-green-500 bg-green-50 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl border border-green-100 shadow-sm">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Active</span>
-                </div>
-              </header>
 
-              <div className="flex-1 bg-white border border-slate-100 rounded-[2rem] sm:rounded-[3rem] shadow-2xl flex flex-col overflow-hidden relative min-h-[400px] sm:min-h-[500px]">
-                <div className="flex-1 overflow-y-auto p-5 md:p-10 space-y-10 custom-scrollbar scroll-smooth">
-                  {chatHistory.length === 0 && (
-                    <div className="h-full flex flex-col items-center justify-center text-center space-y-8 py-20">
-                      <div className="p-10 bg-slate-50 rounded-[3.5rem] text-slate-200 shadow-inner">
-                        <Bot size={80} strokeWidth={1} />
-                      </div>
-                      <div className="space-y-3 max-w-xs">
-                        <p className="font-black text-2xl text-slate-800">{lang === 'mm' ? 'မင်္ဂလာပါရှင်' : 'Mingalarpar'}</p>
-                        <p className="font-bold text-slate-400 leading-relaxed text-sm">
-                          {lang === 'mm' ? 'ဘယ်မှတ်တိုင်ကနေ ဘယ်သွားချင်ပါသလဲ။ YBS လမ်းကြောင်းများအားလုံးကို ကူညီပေးနိုင်ပါတယ်။' : 'Where are you heading today? I can help with all YBS route plans.'}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {chatHistory.map((chat, i) => (
-                    <div key={i} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'} items-start space-x-3`}>
-                      {chat.role === 'bot' && (
-                        <div className="hidden sm:flex w-10 h-10 bg-slate-900 text-yellow-400 rounded-2xl items-center justify-center shadow-lg shrink-0 mt-1">
-                          <Bot size={20} />
-                        </div>
-                      )}
-                      <div className={`flex flex-col ${chat.role === 'user' ? 'items-end' : 'items-start'} max-w-[85%] sm:max-w-[75%]`}>
-                        <div className={`p-6 rounded-[2.25rem] shadow-sm relative transition-all duration-300 ${
-                          chat.role === 'user' 
-                            ? 'bg-yellow-400 text-slate-900 rounded-tr-none shadow-yellow-100' 
-                            : 'bg-slate-50 text-slate-800 rounded-tl-none border border-slate-100'
-                        }`}>
-                          <div className="whitespace-pre-wrap font-bold text-lg leading-relaxed">{chat.text}</div>
-                          
-                          {chat.role === 'bot' && chat.sources && chat.sources.length > 0 && (
-                            <div className="mt-8 pt-6 border-t border-slate-200/40">
-                              <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center space-x-2">
-                                <Globe size={10} className="text-slate-300" />
-                                <span>{t.sources}</span>
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {chat.sources.map((chunk: any, idx: number) => chunk.web && (
-                                  <a key={idx} href={chunk.web.uri} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1.5 px-3 py-1.5 bg-white hover:bg-yellow-50 rounded-xl text-[10px] font-bold text-slate-500 hover:text-yellow-700 transition-all border border-slate-100/50 hover:border-yellow-200">
-                                    <ExternalLink size={10} />
-                                    <span className="truncate max-w-[140px]">{chunk.web.title || 'Source'}</span>
-                                  </a>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2 mt-2 px-4 opacity-40">
-                           <Clock3 size={10} />
-                           <span className="text-[10px] font-black uppercase tracking-widest">{chat.time}</span>
-                           <span className="text-[10px] font-black uppercase tracking-widest">• {chat.role === 'user' ? 'You' : 'YBS AI'}</span>
-                        </div>
-                      </div>
-                      {chat.role === 'user' && (
-                        <div className="hidden sm:flex w-10 h-10 bg-yellow-100 text-yellow-600 rounded-2xl items-center justify-center shadow-md shrink-0 mt-1 border border-yellow-200">
-                          <User size={20} />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  
-                  {isAiLoading && (
-                    <div className="flex justify-start items-start space-x-3 animate-in fade-in slide-in-from-left-2 duration-300">
-                      <div className="hidden sm:flex w-10 h-10 bg-slate-900 text-yellow-400 rounded-2xl items-center justify-center shrink-0 mt-1">
-                        <Sparkles size={20} className="animate-spin duration-1000" />
-                      </div>
-                      <div className="bg-slate-50 p-6 px-10 rounded-[2rem] border border-slate-100 flex items-center space-x-2.5">
-                        <div className="w-2.5 h-2.5 bg-slate-200 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                        <div className="w-2.5 h-2.5 bg-slate-200 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                        <div className="w-2.5 h-2.5 bg-slate-200 rounded-full animate-bounce" />
-                      </div>
-                    </div>
-                  )}
-                  <div ref={chatEndRef} />
-                </div>
-                
-                <div className="p-6 md:p-8 bg-slate-50/50 border-t border-slate-100 backdrop-blur-xl">
-                  <div className="flex items-center space-x-4 bg-white p-2.5 rounded-[2.5rem] shadow-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-yellow-400 transition-all">
-                    <input 
-                      type="text" 
-                      value={aiMessage} 
-                      onChange={(e) => setAiMessage(e.target.value)} 
-                      onKeyDown={(e) => e.key === 'Enter' && handleAiAsk()} 
-                      placeholder={lang === 'mm' ? 'မေးမြန်းပါ...' : 'Type your question...'} 
-                      className="flex-1 p-4 px-6 bg-transparent outline-none text-slate-800 font-bold text-xl placeholder:text-slate-200" 
-                    />
-                    <button 
-                      onClick={handleAiAsk} 
-                      disabled={isAiLoading || !aiMessage.trim()}
-                      className="bg-slate-900 text-yellow-400 p-5 rounded-[2rem] hover:scale-105 active:scale-95 disabled:opacity-30 disabled:scale-100 transition-all shadow-lg"
-                    >
-                      <Send size={28} />
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-center space-x-2 mt-6 opacity-30">
-                    <ShieldCheck size={12} />
-                    <p className="text-[10px] font-black uppercase tracking-widest">
-                      {t.aiDisclaimer}
-                    </p>
-                  </div>
-                </div>
-              </div>
-           </div>
-        )}
       </main>
 
       <nav className="md:hidden fixed bottom-4 sm:bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 flex items-center bg-slate-900/90 backdrop-blur-xl p-2 sm:p-2.5 rounded-full shadow-2xl border border-slate-800 z-50">
         {[
           { v: 'home', i: Zap },
           { v: 'bus-list', i: Bus },
-          { v: 'nearby', i: MapPin },
-          { v: 'ai-assistant', i: Bot }
+          { v: 'nearby', i: MapPin }
         ].map(item => (
           <button key={item.v} onClick={() => { setActiveView(item.v as ViewState); setSelectedBusId(null); }} className={`p-3 sm:p-4 rounded-full transition-all touch-manipulation ${activeView === item.v ? 'bg-yellow-400 text-slate-900' : 'text-slate-500 hover:text-slate-300'}`}><item.i size={20} className="sm:w-6 sm:h-6" /></button>
         ))}
