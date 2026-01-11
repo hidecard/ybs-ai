@@ -5,11 +5,6 @@ import { ViewState, BusLine, BusStop, Language } from './types';
 import { BUS_LINES, BUS_STOPS } from './data/busData';
 import { askYBSAssistant } from './services/geminiService';
 
-const news = [
-  { id: 'n1', time: '10:30 AM', title: 'YBS 12 လမ်းကြောင်းအခြေအနေ ကောင်းမွန်ပါသည်။' },
-  { id: 'n2', time: '10:00 AM', title: 'လှည်းတန်းတွင် ယာဉ်ကြောအနည်းငယ် ပိတ်ဆို့မှုရှိပါသည်။' },
-  { id: 'n3', time: '09:15 AM', title: 'လေဆိပ်အထူးလိုင်းများ (Airport Shuttle) ပုံမှန်ပြေးဆွဲနေပါသည်။' }
-];
 
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371e3;
@@ -50,6 +45,8 @@ const App: React.FC = () => {
   const [locationError, setLocationError] = useState<string | null>(null);
 
   const [lineSearchQuery, setLineSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 12;
 
 
 
@@ -133,6 +130,10 @@ const App: React.FC = () => {
 
   const selectedBus = useMemo(() => BUS_LINES.find(l => l.id === selectedBusId), [selectedBusId]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredLines.length / PAGE_SIZE));
+  useEffect(() => { if (page > totalPages) setPage(1); }, [totalPages]);
+  const paginatedLines = useMemo(() => filteredLines.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filteredLines, page]);
+
   const handleSmartSearch = async (e?: React.FormEvent, directQuery?: string) => {
     if (e) e.preventDefault();
     const queryToUse = directQuery || smartQuery;
@@ -153,20 +154,20 @@ const App: React.FC = () => {
   const NavItem = ({ view, icon: Icon, label }: { view: ViewState, icon: any, label: string }) => (
     <button
       onClick={() => { setActiveView(view); setIsSidebarOpen(false); setSelectedBusId(null); }}
-      className={`flex items-center space-x-3 w-full p-4 rounded-2xl transition-all duration-300 ${
+      className={`flex items-center space-x-2 w-full p-3 rounded-2xl transition-all duration-300 ${
         activeView === view 
           ? 'bg-yellow-400 text-slate-900 shadow-xl shadow-yellow-200/50 scale-[1.02]' 
           : 'hover:bg-slate-100 text-slate-500'
       }`}
     >
-      <Icon size={20} className={activeView === view ? 'animate-pulse' : ''} />
-      <span className="font-bold tracking-tight">{label}</span>
+      <Icon size={18} className={activeView === view ? 'animate-pulse' : ''} />
+      <span className="font-bold tracking-tight text-sm">{label}</span>
     </button>
   );
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 text-slate-900 font-['Inter']">
-      <div className="md:hidden flex items-center justify-between p-5 bg-white/90 backdrop-blur-md border-b sticky top-0 z-50 shadow-sm">
+      <div className="md:hidden flex items-center justify-between p-3 bg-white/90 backdrop-blur-md border-b sticky top-0 z-50 shadow-sm">
         <div className="flex items-center space-x-3">
           <div className="bg-slate-900 p-2 rounded-xl">
             <Bus size={22} className="text-yellow-400" />
@@ -178,46 +179,46 @@ const App: React.FC = () => {
         </button>
       </div>
 
-      <aside className={`fixed md:static inset-y-0 left-0 z-40 w-80 bg-white border-r transform transition-transform duration-500 ease-out ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'}`}>
-        <div className="p-10 hidden md:block">
+      <aside className={`fixed md:static inset-y-0 left-0 z-40 w-52 bg-white border-r transform transition-transform duration-500 ease-out ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'}`}>
+        <div className="p-4 hidden md:block">
           <div className="flex items-center space-x-3 mb-12">
-            <div className="bg-slate-900 p-3.5 rounded-[1.25rem] shadow-2xl shadow-slate-200">
-              <Bus size={32} className="text-yellow-400" />
+            <div className="bg-slate-900 p-2.5 rounded-[1rem] shadow-2xl shadow-slate-200">
+              <Bus size={24} className="text-yellow-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tighter italic leading-none">YBS<span className="text-yellow-500">.</span>2026</h1>
-              <div className="flex items-center space-x-1 mt-1.5">
-                <ShieldCheck size={10} className="text-green-500" />
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{lang === 'mm' ? '၂၀၂၆ စနစ်' : '2026 Engine'}</span>
+              <h1 className="text-xl font-black text-slate-900 tracking-tighter italic leading-none">YBS<span className="text-yellow-500">.</span>2026</h1>
+              <div className="flex items-center space-x-1 mt-1">
+                <ShieldCheck size={9} className="text-green-500" />
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{lang === 'mm' ? '၂၀၂၆ စနစ်' : '2026 Engine'}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <nav className="px-6 space-y-3">
+        <nav className="px-4 space-y-2">
           <NavItem view="home" icon={Zap} label={t.home} />
           <NavItem view="bus-list" icon={MapIcon} label={t.routes} />
           <NavItem view="nearby" icon={MapPin} label={t.nearby} />
         </nav>
 
-        <div className="absolute bottom-8 left-0 w-full px-6 space-y-4">
+        <div className="absolute bottom-5 left-0 w-full px-3 space-y-2">
           <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl">
-            <button onClick={() => setLang('mm')} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${lang === 'mm' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400'}`}>မြန်မာ</button>
-            <button onClick={() => setLang('en')} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${lang === 'en' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400'}`}>EN</button>
+            <button onClick={() => setLang('mm')} className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${lang === 'mm' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400'}`}>မြန်မာ</button>
+            <button onClick={() => setLang('en')} className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${lang === 'en' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400'}`}>EN</button>
           </div>
-          <div className="p-6 bg-slate-900 rounded-[2.5rem] shadow-2xl relative overflow-hidden group border border-slate-800">
-            <div className="relative z-10 space-y-3">
+          <div className="p-4 bg-slate-900 rounded-[2rem] shadow-2xl relative overflow-hidden group border border-slate-800">
+            <div className="relative z-10 space-y-2">
               <div className="flex items-center space-x-2">
-                <Globe size={14} className="text-yellow-400" />
-                <span className="text-[10px] font-black text-yellow-400 uppercase tracking-[0.2em]">Live Data</span>
+                <Globe size={12} className="text-yellow-400" />
+                <span className="text-[9px] font-black text-yellow-400 uppercase tracking-[0.15em]">Live Data</span>
               </div>
-              <p className="text-[11px] text-slate-400 font-semibold leading-relaxed">Ref: yangonbusroute.com</p>
+              <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">Ref: yangonbusroute.com</p>
             </div>
           </div>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-10 lg:p-14 pb-24 sm:pb-28 md:pb-14 space-y-8 sm:space-y-10 md:space-y-12">
+      <main className="flex-1 overflow-y-auto p-2 sm:p-3 md:p-4 lg:p-6 pb-16 sm:pb-18 md:pb-12 space-y-4 sm:space-y-6 md:space-y-8">
         {activeView === 'bus-detail' && selectedBus && (
           <div className="max-w-5xl mx-auto space-y-10 animate-in fade-in slide-in-from-left-4 duration-500">
             <button 
@@ -228,17 +229,17 @@ const App: React.FC = () => {
               <span>{t.back}</span>
             </button>
 
-            <header className="bg-white p-6 sm:p-8 md:p-10 rounded-[2.5rem] sm:rounded-[3.5rem] border border-slate-100 shadow-xl relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-6 sm:p-10 opacity-5 -rotate-12">
-                  <Bus size={120} className="sm:w-[180px] sm:h-[180px]" />
-               </div>
-               <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6 sm:gap-8">
+            <header className="bg-white p-3 sm:p-4 md:p-6 rounded-[2rem] sm:rounded-[3rem] border border-slate-100 shadow-md relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-3 sm:p-4 opacity-5 -rotate-12">
+                <Bus size={64} className="sm:w-[96px] sm:h-[96px]" />
+              </div>
+                  <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
                   <div className="flex items-center space-x-4 sm:space-x-6 md:space-x-8">
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-[2rem] sm:rounded-[2.5rem] flex items-center justify-center text-white text-2xl sm:text-3xl md:text-4xl font-black shadow-2xl" style={{ backgroundColor: selectedBus.color }}>
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-[1.5rem] sm:rounded-[2rem] flex items-center justify-center text-white text-xl sm:text-2xl md:text-3xl font-black shadow-2xl" style={{ backgroundColor: selectedBus.color }}>
                       {selectedBus.number.replace('YBS ', '')}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-2 break-words">{selectedBus.number}</h2>
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tighter mb-2 break-words">{selectedBus.number}</h2>
                       <div className="flex flex-wrap gap-2">
                         {selectedBus.hasYPS && (
                           <span className="px-2 sm:px-3 py-1 bg-yellow-400 text-slate-900 text-[9px] sm:text-[10px] font-black uppercase rounded-full flex items-center space-x-1">
@@ -250,38 +251,37 @@ const App: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <button onClick={(e) => toggleFavorite(selectedBus.id, e)} className={`p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] transition-all shadow-lg touch-manipulation ${favorites.includes(selectedBus.id) ? 'bg-yellow-400 text-slate-900' : 'bg-slate-50 text-slate-200 hover:bg-slate-100'}`}>
-                    <Star size={24} className="sm:w-8 sm:h-8" fill={favorites.includes(selectedBus.id) ? 'currentColor' : 'none'} />
+                  <button onClick={(e) => toggleFavorite(selectedBus.id, e)} className={`p-2 sm:p-3 rounded-[1rem] sm:rounded-[1.5rem] transition-all shadow-md touch-manipulation ${favorites.includes(selectedBus.id) ? 'bg-yellow-400 text-slate-900' : 'bg-slate-50 text-slate-200 hover:bg-slate-100'}`}>
+                    <Star size={18} className="sm:w-5 sm:h-5" fill={favorites.includes(selectedBus.id) ? 'currentColor' : 'none'} />
                   </button>
                </div>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-               <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex items-center space-x-4">
-                  <div className="p-4 bg-green-50 text-green-600 rounded-2xl"><Wallet size={24} /></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex items-center space-x-3">
+                  <div className="p-3 bg-green-50 text-green-600 rounded-2xl"><Wallet size={20} /></div>
                   <div>
                     <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.fare}</div>
-                    <div className="text-xl font-black">{selectedBus.fare || '၂၀၀-၄၀၀ MMK'}</div>
+                    <div className="text-lg font-black">{selectedBus.fare || '၂၀၀-၄၀၀ MMK'}</div>
                   </div>
                </div>
-               <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex items-center space-x-4">
-                  <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl"><Timer size={24} /></div>
+               <div className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex items-center space-x-3">
+                  <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Timer size={20} /></div>
                   <div>
                     <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.frequency}</div>
-                    <div className="text-xl font-black">{selectedBus.frequency || '၁၀-၁၅ မိနစ်'}</div>
+                    <div className="text-lg font-black">{selectedBus.frequency || '၁၀-၁၅ မိနစ်'}</div>
                   </div>
                </div>
-               <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex items-center space-x-4">
-                  <div className="p-4 bg-purple-50 text-purple-600 rounded-2xl"><Calendar size={24} /></div>
+               <div className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex items-center space-x-3">
+                  <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl"><Calendar size={20} /></div>
                   <div>
                     <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.hours}</div>
-                    <div className="text-xl font-black">{selectedBus.hours || '05:00 - 21:00'}</div>
+                    <div className="text-lg font-black">{selectedBus.hours || '05:00 - 21:00'}</div>
                   </div>
                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-               <section className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-8">
+              <section className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
                   <div className="flex items-center space-x-2 text-sm font-black text-slate-900 uppercase tracking-widest">
                     <Navigation size={18} className="text-yellow-500" />
                     <span>{t.stops} ({selectedBus.route.length})</span>
@@ -307,74 +307,27 @@ const App: React.FC = () => {
                     })}
                   </div>
                </section>
-
-               <section className="space-y-10">
-                  <div className="bg-slate-900 p-10 rounded-[3.5rem] text-white space-y-8">
-                    <div className="flex items-center justify-between">
-                       <div className="flex items-center space-x-2 text-sm font-black uppercase tracking-widest">
-                          <Zap size={18} className="text-yellow-400" />
-                          <span>Live Board</span>
-                       </div>
-                       <span className="text-[10px] font-black bg-white/10 px-3 py-1 rounded-full uppercase">Realtime Sim</span>
-                    </div>
-                    <div className="space-y-4">
-                       {[
-                         { time: '4m', id: '1A', status: 'On Track' },
-                         { time: '12m', id: '1B', status: 'Delayed' },
-                         { time: '21m', id: '1C', status: 'On Track' }
-                       ].map((bus, i) => (
-                         <div key={i} className="flex items-center justify-between p-6 bg-white/5 rounded-[2rem] border border-white/10">
-                            <div className="flex items-center space-x-4">
-                               <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center font-black">{bus.id}</div>
-                               <div>
-                                  <div className="font-black">{bus.status}</div>
-                                  <div className="text-[10px] text-white/40 uppercase font-bold">Updated Just Now</div>
-                               </div>
-                            </div>
-                            <div className="text-right">
-                               <div className="text-2xl font-black text-yellow-400">{bus.time}</div>
-                               <div className="text-[10px] text-white/40 uppercase font-bold">Estimated</div>
-                            </div>
-                         </div>
-                       ))}
-                    </div>
-                  </div>
-
-                  <div className="bg-yellow-50 p-10 rounded-[3.5rem] border border-yellow-100/50 space-y-4">
-                    <div className="flex items-center space-x-2 text-sm font-black text-yellow-700 uppercase tracking-widest">
-                      <Sparkles size={18} />
-                      <span>AI Insights</span>
-                    </div>
-                    <p className="text-sm font-bold text-yellow-800 leading-relaxed italic">
-                      "YBS {selectedBus.number} is best for travelers from {selectedBus.startPoint} to {selectedBus.endPoint}. Expect heavy traffic near Junction Square around 5 PM."
-                    </p>
-                  </div>
-               </section>
-            </div>
           </div>
         )}
 
         {activeView === 'home' && (
-          <div className="max-w-4xl mx-auto space-y-14">
-            <header className="space-y-10">
+          <div className="max-w-3xl mx-auto space-y-14">
+            <header className="space-y-6">
               <div className="space-y-4">
                 <div className="inline-flex items-center space-x-2 px-4 py-1.5 bg-yellow-50 border border-yellow-100 rounded-full text-yellow-700 text-[10px] font-black uppercase tracking-widest">
                   <Sparkles size={12} />
-                  <span>AI Powered Transit Hub</span>
+                  <span>YBS Guide with Ai</span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black text-slate-900 tracking-tight leading-[1.1]">
-                  {t.liveTitle} <br/>
-                  <span className="text-yellow-500 italic">{t.liveSubtitle}</span>
-                </h2>
+              
               </div>
 
               <form onSubmit={handleSmartSearch} className="relative group">
                 <div className="absolute -inset-2 bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-600 rounded-[2rem] sm:rounded-[3rem] blur opacity-15 group-hover:opacity-30 transition duration-1000"></div>
-                <div className="relative bg-white p-2 sm:p-3 rounded-[2rem] sm:rounded-[2.75rem] shadow-2xl flex items-center border border-slate-100">
+                <div className="relative bg-white p-2 sm:p-2.5 rounded-[1.5rem] sm:rounded-[2rem] shadow-2xl flex items-center border border-slate-100">
                   <div className="pl-4 sm:pl-6 text-slate-300"><Search size={24} className="sm:w-7 sm:h-7" /></div>
-                  <input type="text" value={smartQuery} onChange={(e) => setSmartQuery(e.target.value)} placeholder={t.searchPlaceholder} className="flex-1 p-4 sm:p-6 bg-transparent outline-none text-slate-800 font-bold text-lg sm:text-xl placeholder:text-slate-200" />
-                  <button type="submit" className="bg-slate-900 text-yellow-400 px-6 sm:px-10 py-4 sm:py-5 rounded-[1.5rem] sm:rounded-[2.25rem] font-black transition-all flex items-center space-x-2 sm:space-x-3 active:scale-[0.97]">
-                    <Zap size={20} className="sm:w-6 sm:h-6" /><span className="hidden sm:inline">{lang === 'mm' ? 'ရှာဖွေပါ' : 'Search'}</span>
+                  <input type="text" value={smartQuery} onChange={(e) => setSmartQuery(e.target.value)} placeholder={t.searchPlaceholder} className="flex-1 p-3 sm:p-4 bg-transparent outline-none text-slate-800 font-bold text-base sm:text-lg placeholder:text-slate-200" />
+                  <button type="submit" className="bg-slate-900 text-yellow-400 px-4 sm:px-6 py-3 sm:py-4 rounded-[1.25rem] sm:rounded-[1.75rem] font-black transition-all flex items-center space-x-2 sm:space-x-3 active:scale-[0.97]">
+                    <Zap size={18} className="sm:w-5 sm:h-5" /><span className="hidden sm:inline">{lang === 'mm' ? 'ရှာဖွေပါ' : 'Search'}</span>
                   </button>
                 </div>
               </form>
@@ -391,7 +344,7 @@ const App: React.FC = () => {
             )}
 
             {smartResult && (
-              <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700">
+              <section className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl animate-in fade-in slide-in-from-bottom-8 duration-700">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center space-x-3">
                     <div className="p-2.5 bg-slate-900 rounded-[1rem] text-yellow-400"><Sparkles size={24} /></div>
@@ -426,28 +379,28 @@ const App: React.FC = () => {
                     <Star size={12} className="text-yellow-400 fill-yellow-400" />
                     <span>{t.favTitle}</span>
                   </h3>
-                  <div className="flex flex-wrap gap-4">
+                  <div className="flex flex-wrap gap-3">
                     {BUS_LINES.filter(l => favorites.includes(l.id)).map(line => (
-                      <button key={line.id} onClick={() => { setSelectedBusId(line.id); setActiveView('bus-detail'); }} className="bg-white p-4 px-6 rounded-2xl border border-slate-100 shadow-sm hover:border-yellow-400 transition-all flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-black" style={{ backgroundColor: line.color }}>{line.number.replace('YBS ', '')}</div>
+                      <button key={line.id} onClick={() => { setSelectedBusId(line.id); setActiveView('bus-detail'); }} className="bg-white p-3 px-4 rounded-2xl border border-slate-100 shadow-sm hover:border-yellow-400 transition-all flex items-center space-x-3">
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-black" style={{ backgroundColor: line.color }}>{line.number.replace('YBS ', '')}</div>
                         <span className="font-black text-sm">{line.number}</span>
                       </button>
                     ))}
                   </div>
                 </div>
               )}
-              <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3.5rem] border border-slate-100 shadow-sm space-y-8 sm:space-y-10">
+              <div className="bg-white p-4 sm:p-6 rounded-[2rem] sm:rounded-[3rem] border border-slate-100 shadow-sm space-y-6 sm:space-y-8">
                 <h3 className="font-black text-2xl sm:text-3xl text-slate-900 tracking-tight">{t.ai}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 relative">
-                  <input type="text" value={fromStop} onChange={(e) => setFromStop(e.target.value)} placeholder={lang === 'mm' ? 'လက်ရှိနေရာ...' : 'Current location...'} className="w-full p-4 sm:p-6 bg-slate-50 border border-slate-100 rounded-[1.5rem] sm:rounded-[1.75rem] outline-none font-bold text-slate-700 text-sm sm:text-base" />
-                  <input type="text" value={toStop} onChange={(e) => setToStop(e.target.value)} placeholder={lang === 'mm' ? 'သွားမည့်နေရာ...' : 'Destination...'} className="w-full p-4 sm:p-6 bg-slate-50 border border-slate-100 rounded-[1.5rem] sm:rounded-[1.75rem] outline-none font-bold text-slate-700 text-sm sm:text-base" />
+                  <input type="text" value={fromStop} onChange={(e) => setFromStop(e.target.value)} placeholder={lang === 'mm' ? 'လက်ရှိနေရာ...' : 'Current location...'} className="w-full p-3 sm:p-4 bg-slate-50 border border-slate-100 rounded-[1.25rem] sm:rounded-[1.5rem] outline-none font-bold text-slate-700 text-sm sm:text-base" />
+                  <input type="text" value={toStop} onChange={(e) => setToStop(e.target.value)} placeholder={lang === 'mm' ? 'သွားမည့်နေရာ...' : 'Destination...'} className="w-full p-3 sm:p-4 bg-slate-50 border border-slate-100 rounded-[1.25rem] sm:rounded-[1.5rem] outline-none font-bold text-slate-700 text-sm sm:text-base" />
                 </div>
                 <button onClick={async () => {
                   const prompt = `${fromStop} မှ ${toStop} သို့ အကောင်းဆုံးလမ်းကြောင်းကို ရှင်းပြပါ။`;
                   setSmartQuery(prompt);
                   await handleSmartSearch(undefined, prompt);
-                }} className="w-full bg-yellow-400 text-slate-900 font-black py-4 sm:py-6 rounded-[1.5rem] sm:rounded-[2rem] shadow-2xl flex items-center justify-center space-x-3 sm:space-x-4 text-sm sm:text-base">
-                  <Sparkles size={20} className="sm:w-6 sm:h-6" /><span>{t.aiRouteBtn}</span>
+                }} className="w-full bg-yellow-400 text-slate-900 font-black py-3 sm:py-4 rounded-[1.25rem] sm:rounded-[1.5rem] shadow-lg flex items-center justify-center space-x-3 sm:space-x-4 text-sm sm:text-base">
+                  <Sparkles size={18} className="sm:w-5 sm:h-5" /><span>{t.aiRouteBtn}</span>
                 </button>
               </div>
             </div>
@@ -456,10 +409,10 @@ const App: React.FC = () => {
 
         {activeView === 'bus-list' && (
           <div className="max-w-5xl mx-auto space-y-12">
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-              <div className="space-y-4">
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight">{t.routes}</h2>
-                <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">YBS 2026 Directory</p>
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t.routes}</h2>
+                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">YBS 2026 Directory</p>
               </div>
               <div className="relative w-full md:w-96">
                 <input 
@@ -467,20 +420,20 @@ const App: React.FC = () => {
                   value={lineSearchQuery} 
                   onChange={(e) => setLineSearchQuery(e.target.value)} 
                   placeholder={t.routeSearchPlaceholder} 
-                  className="w-full p-4 pl-12 bg-white border border-slate-100 rounded-2xl shadow-sm font-bold text-sm outline-none focus:ring-2 focus:ring-yellow-400 transition-all" 
+                  className="w-full p-3 pl-10 bg-white border border-slate-100 rounded-xl shadow-sm font-bold text-sm outline-none focus:ring-2 focus:ring-yellow-400 transition-all" 
                 />
                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
               </div>
             </header>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 animate-in fade-in duration-500">
-              {filteredLines.map(line => (
-                <div key={line.id} onClick={() => { setSelectedBusId(line.id); setActiveView('bus-detail'); }} className={`bg-white p-8 rounded-[3rem] border transition-all duration-500 flex flex-col h-full group cursor-pointer ${favorites.includes(line.id) ? 'border-yellow-200 shadow-xl shadow-yellow-50' : 'border-slate-100 shadow-sm hover:shadow-2xl'}`}>
-                  <div className="flex items-center space-x-6 mb-8">
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-white text-xl shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: line.color }}>{line.number.replace('YBS ', '')}</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 animate-in fade-in duration-500">
+              {paginatedLines.map(line => (
+                <div key={line.id} onClick={() => { setSelectedBusId(line.id); setActiveView('bus-detail'); }} className={`bg-white p-4 rounded-[2rem] border transition-all duration-500 flex flex-col h-full group cursor-pointer ${favorites.includes(line.id) ? 'border-yellow-200 shadow-xl shadow-yellow-50' : 'border-slate-100 shadow-sm hover:shadow-2xl'}`}>
+                  <div className="flex items-center space-x-4 mb-6">
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center font-black text-white text-lg shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: line.color }}>{line.number.replace('YBS ', '')}</div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">{line.number}</h3>
-                        <button onClick={(e) => toggleFavorite(line.id, e)} className={`p-2 rounded-xl transition-all ${favorites.includes(line.id) ? 'bg-yellow-400 text-white' : 'bg-slate-50 text-slate-200'}`}><Star size={18} fill={favorites.includes(line.id) ? 'white' : 'none'} /></button>
+                        <h3 className="text-xl font-black text-slate-900 tracking-tight">{line.number}</h3>
+                        <button onClick={(e) => toggleFavorite(line.id, e)} className={`p-1.5 rounded-xl transition-all ${favorites.includes(line.id) ? 'bg-yellow-400 text-white' : 'bg-slate-50 text-slate-200'}`}><Star size={16} fill={favorites.includes(line.id) ? 'white' : 'none'} /></button>
                       </div>
                       <div className="flex items-center space-x-2 mt-1">
                         <div className="flex items-center space-x-2 text-slate-400 font-bold text-[10px] uppercase tracking-widest"><span>{line.startPoint}</span><ArrowRightLeft size={10} /><span>{line.endPoint}</span></div>
@@ -488,7 +441,7 @@ const App: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <p className="text-slate-500 font-medium text-sm leading-relaxed mb-8 italic">"{line.description}"</p>
+                  <p className="text-slate-500 font-medium text-sm leading-relaxed mb-6 italic">"{line.description}"</p>
                   <div className="mt-auto flex items-center justify-between pt-6 border-t border-slate-100">
                      <div className="flex items-center space-x-2 text-slate-400 font-bold text-[10px] uppercase tracking-widest"><Clock size={12} /><span>{line.estimatedTripDuration}</span></div>
                      <ChevronRight size={20} className="text-slate-300 group-hover:text-yellow-500 transform group-hover:translate-x-1 transition-all" />
@@ -502,14 +455,22 @@ const App: React.FC = () => {
                 </div>
               )}
             </div>
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-slate-500">Showing {filteredLines.length === 0 ? 0 : ( (page - 1) * PAGE_SIZE + 1 )} - {Math.min(page * PAGE_SIZE, filteredLines.length)} of {filteredLines.length}</div>
+              <div className="flex items-center space-x-2">
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1 rounded-lg bg-slate-50 text-sm disabled:opacity-40">Prev</button>
+                <div className="text-sm font-bold">{page}/{totalPages}</div>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1 rounded-lg bg-slate-50 text-sm disabled:opacity-40">Next</button>
+              </div>
+            </div>
           </div>
         )}
 
         {activeView === 'nearby' && (
-          <div className="max-w-4xl mx-auto space-y-12">
+          <div className="max-w-3xl mx-auto space-y-12">
             <header className="flex items-center justify-between">
               <div className="space-y-4">
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight">{t.nearby}</h2>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t.nearby}</h2>
                 <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">{lang === 'mm' ? 'အနီးဆုံးမှတ်တိုင်များ' : 'Stops near you'}</p>
               </div>
               <button onClick={locateUser} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:bg-slate-50 flex items-center space-x-2">
@@ -517,22 +478,22 @@ const App: React.FC = () => {
               </button>
             </header>
             {userLocation && (
-              <div className="grid grid-cols-1 gap-6">
+              <div className="grid grid-cols-1 gap-4">
                 {nearbyStops.map((stop) => (
-                  <div key={stop.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6 hover:shadow-xl transition-all group">
-                    <div className="flex items-center space-x-6">
-                      <div className="p-5 bg-slate-900 rounded-[1.25rem] text-yellow-400"><MapPin size={32} /></div>
+                  <div key={stop.id} className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 hover:shadow-md transition-all group">
+                    <div className="flex items-center space-x-4">
+                      <div className="p-3 bg-slate-900 rounded-[1rem] text-yellow-400"><MapPin size={24} /></div>
                       <div className="space-y-1">
-                        <h4 className="text-2xl font-black text-slate-900">{stop.name}</h4>
-                        <div className="flex items-center space-x-3 text-slate-400 font-bold text-xs uppercase tracking-widest"><span className="text-yellow-500">{stop.township}</span><span>•</span><span>{stop.landmark}</span></div>
+                        <h4 className="text-xl font-black text-slate-900">{stop.name}</h4>
+                        <div className="flex items-center space-x-2 text-slate-400 font-bold text-xs uppercase tracking-widest"><span className="text-yellow-500">{stop.township}</span><span>•</span><span>{stop.landmark}</span></div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-6 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-end">
                       <div className="text-right">
-                        <div className="text-3xl font-black text-slate-900">{stop.distance! === Infinity ? '???' : stop.distance! < 1000 ? `${Math.round(stop.distance!)}m` : `${(stop.distance! / 1000).toFixed(1)}km`}</div>
+                        <div className="text-2xl font-black text-slate-900">{stop.distance! === Infinity ? '???' : stop.distance! < 1000 ? `${Math.round(stop.distance!)}m` : `${(stop.distance! / 1000).toFixed(1)}km`}</div>
                         <div className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{lang === 'mm' ? 'အကွာအဝေး' : 'Distance'}</div>
                       </div>
-                      <button onClick={() => { setLineSearchQuery(stop.name); setActiveView('bus-list'); }} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-yellow-400 hover:text-slate-900"><ChevronRight size={24} /></button>
+                      <button onClick={() => { setLineSearchQuery(stop.name); setActiveView('bus-list'); }} className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-yellow-400 hover:text-slate-900"><ChevronRight size={20} /></button>
                     </div>
                   </div>
                 ))}
